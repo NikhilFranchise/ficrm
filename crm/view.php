@@ -424,7 +424,20 @@ $statShortlists = count($shortlists);
                 <!-- Tab: Master Data -->
                 <div class="tab-pane fade show active" id="navs-api-data" role="tabpanel">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="mb-0 text-capitalize"><?= htmlspecialchars($type) ?> Profile</h5>
+                        <div class="d-flex align-items-center">
+                            <h5 class="mb-0 text-capitalize me-3"><?= htmlspecialchars($type) ?> Profile</h5>
+                            <?php if ($isInvestor): ?>
+                                <button class="btn btn-sm btn-outline-warning btn-edit-investor" 
+                                        data-id="<?= $record['id'] ?>"
+                                        data-email="<?= htmlspecialchars($record['email']) ?>"
+                                        data-mobile="<?= htmlspecialchars($record['mobile']) ?>"
+                                        data-min="<?= $record['min_investment'] ?>"
+                                        data-max="<?= $record['max_investment'] ?>"
+                                        data-cat="<?= htmlspecialchars($record['category_interested'] ?? '') ?>">
+                                    <i class="bx bx-edit-alt"></i> Edit
+                                </button>
+                            <?php endif; ?>
+                        </div>
                         <?php if ($isInvestor): ?>
                             <span class="badge bg-label-primary"><?= htmlspecialchars($current_status) ?></span>
                         <?php endif; ?>
@@ -1060,8 +1073,99 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         };
 
-        const chart = new ApexCharts(document.querySelector("#activityChart"), options);
+        var chart = new ApexCharts(document.querySelector("#activityChart"), options);
         chart.render();
     }
 });
 </script>
+
+<?php if ($isInvestor): ?>
+<!-- Edit Investor Modal -->
+<div class="modal fade" id="editInvestorModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Investor Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="editInvestorForm">
+        <div class="modal-body">
+            <input type="hidden" name="id" id="edit_id">
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" id="edit_email" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Phone / Mobile</label>
+                <input type="text" name="mobile" id="edit_mobile" class="form-control" required>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Min Investment</label>
+                    <input type="number" name="min_investment" id="edit_min" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Max Investment</label>
+                    <input type="number" name="max_investment" id="edit_max" class="form-control" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Category Interested</label>
+                <input type="text" name="category_interested" id="edit_cat" class="form-control">
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editBtn = document.querySelector('.btn-edit-investor');
+    if (!editBtn) return;
+    
+    const editModal = new bootstrap.Modal(document.getElementById('editInvestorModal'));
+    const editForm = document.getElementById('editInvestorForm');
+
+    editBtn.addEventListener('click', function() {
+        document.getElementById('edit_id').value = this.dataset.id;
+        document.getElementById('edit_email').value = this.dataset.email;
+        document.getElementById('edit_mobile').value = this.dataset.mobile;
+        document.getElementById('edit_min').value = this.dataset.min;
+        document.getElementById('edit_max').value = this.dataset.max;
+        document.getElementById('edit_cat').value = this.dataset.cat;
+        editModal.show();
+    });
+
+    editForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const apiBase = "<?= API_BASE_URL ?>";
+        
+        fetch(apiBase + "/api_investor_update.php", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Failed to update investor.');
+        });
+    });
+});
+</script>
+<?php endif; ?>
+
+<?php require_once 'footer.php'; ?>

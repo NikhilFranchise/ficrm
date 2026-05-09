@@ -97,6 +97,15 @@ $totalPages = ceil($total / $limit);
                         </td>
                         <td class="text-center">
                             <a href="view.php?type=investor&id=<?= $inv['id'] ?>" class="btn btn-sm btn-outline-primary">Profile</a>
+                            <button class="btn btn-sm btn-outline-warning btn-edit-investor" 
+                                    data-id="<?= $inv['id'] ?>"
+                                    data-email="<?= htmlspecialchars($inv['email']) ?>"
+                                    data-mobile="<?= htmlspecialchars($inv['mobile']) ?>"
+                                    data-min="<?= $inv['min_investment'] ?>"
+                                    data-max="<?= $inv['max_investment'] ?>"
+                                    data-cat="<?= htmlspecialchars($inv['category_interested'] ?? '') ?>">
+                                <i class="bx bx-edit"></i> Edit
+                            </button>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -130,5 +139,97 @@ $totalPages = ceil($total / $limit);
     </div>
     <?php endif; ?>
 </div>
+
+<!-- Edit Investor Modal -->
+<div class="modal fade" id="editInvestorModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Investor Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="editInvestorForm">
+        <div class="modal-body">
+            <input type="hidden" name="id" id="edit_id">
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" id="edit_email" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Phone / Mobile</label>
+                <input type="text" name="mobile" id="edit_mobile" class="form-control" required>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Min Investment</label>
+                    <input type="number" name="min_investment" id="edit_min" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Max Investment</label>
+                    <input type="number" name="max_investment" id="edit_max" class="form-control" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Category Interested</label>
+                <input type="text" name="category_interested" id="edit_cat" class="form-control">
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editBtns = document.querySelectorAll('.btn-edit-investor');
+    const editModal = new bootstrap.Modal(document.getElementById('editInvestorModal'));
+    const editForm = document.getElementById('editInvestorForm');
+
+    editBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('edit_id').value = this.dataset.id;
+            document.getElementById('edit_email').value = this.dataset.email;
+            document.getElementById('edit_mobile').value = this.dataset.mobile;
+            document.getElementById('edit_min').value = this.dataset.min;
+            document.getElementById('edit_max').value = this.dataset.max;
+            document.getElementById('edit_cat').value = this.dataset.cat;
+            editModal.show();
+        });
+    });
+
+    editForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        // Note: The API is on the remote server, so we need to point to the correct URL
+        // However, we usually use the api_client logic. 
+        // For simplicity and following the user's "upload it" request, 
+        // we'll assume the script is uploaded to the same api_export folder.
+        
+        const apiBase = "<?= API_BASE_URL ?>";
+        fetch(apiBase + "/api_investor_update.php", {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Failed to update investor. Check console.');
+        });
+    });
+});
+</script>
 
 <?php require_once 'footer.php'; ?>
