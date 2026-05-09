@@ -1,6 +1,8 @@
 <?php
 require_once 'header.php';
 require_once 'api_client.php';
+$catMapping = require_once 'categories.php';
+$masterCats = $catMapping['SeoCategoryArr'] ?? [];
 
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 if ($page < 1) $page = 1;
@@ -171,7 +173,12 @@ $totalPages = ceil($total / $limit);
             </div>
             <div class="mb-3">
                 <label class="form-label">Category Interested</label>
-                <input type="text" name="category_interested" id="edit_cat" class="form-control">
+                <select name="category_interested" id="edit_cat" class="form-select">
+                    <option value="">Select Category</option>
+                    <?php foreach($masterCats as $cid => $cname): ?>
+                        <option value="<?= htmlspecialchars($cname) ?>"><?= ucwords(str_replace('-', ' ', $cname)) ?></option>
+                    <?php endforeach; ?>
+                </select>
             </div>
         </div>
         <div class="modal-footer">

@@ -224,6 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
 require_once 'header.php';
 $catMapping = require_once 'categories.php';
+$masterCats = $catMapping['SeoCategoryArr'] ?? [];
 
 if ($isInvestor) {
     $apiRes = fetchSingleFromApi('investor', $id);
@@ -1111,7 +1112,12 @@ document.addEventListener("DOMContentLoaded", function() {
             </div>
             <div class="mb-3">
                 <label class="form-label">Category Interested</label>
-                <input type="text" name="category_interested" id="edit_cat" class="form-control">
+                <select name="category_interested" id="edit_cat" class="form-select">
+                    <option value="">Select Category</option>
+                    <?php foreach($masterCats as $cid => $cname): ?>
+                        <option value="<?= htmlspecialchars($cname) ?>"><?= ucwords(str_replace('-', ' ', $cname)) ?></option>
+                    <?php endforeach; ?>
+                </select>
             </div>
         </div>
         <div class="modal-footer">
