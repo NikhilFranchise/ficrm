@@ -1,0 +1,574 @@
+
+Notice: session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\FMC\crm\auth.php on line 3
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed layout-compact" dir="ltr" data-theme="theme-default" data-assets-path="../assets/" data-template="vertical-menu-template-free">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>CRM Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="../assets/img/favicon/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../assets/vendor/fonts/boxicons.css" />
+    <link rel="stylesheet" href="../assets/vendor/css/core.css" class="template-customizer-core-css" />
+    <link rel="stylesheet" href="../assets/vendor/css/theme-default.css" class="template-customizer-theme-css" />
+    <link rel="stylesheet" href="../assets/css/demo.css" />
+    <link rel="stylesheet" href="../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
+    <link rel="stylesheet" href="../assets/vendor/libs/apex-charts/apex-charts.css" />
+    <script src="../assets/vendor/js/helpers.js"></script>
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/vendor/libs/apex-charts/apexcharts.js"></script>
+    <style>
+        .pagination { margin-top: 20px; }
+        
+        /* Global Page Loader */
+        #global-loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255, 255, 255, 0.85);
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #global-loader.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Global Page Loader -->
+    <div id="global-loader">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5 class="mt-3 text-primary fw-bold">Processing Data...</h5>
+    </div>
+    
+    <script>
+        // Hide loader when page is fully loaded
+        window.addEventListener('load', function() {
+            document.getElementById('global-loader').classList.add('hidden');
+        });
+        
+        // Show loader when a form is submitted
+        document.addEventListener('submit', function() {
+            document.getElementById('global-loader').classList.remove('hidden');
+        });
+        
+        // Show loader before navigating away (on hyperlink click)
+        document.addEventListener('click', function(e) {
+            let target = e.target.closest('a');
+            if (target && target.href && !target.href.includes('javascript:') && !target.href.includes('#') && target.target !== '_blank') {
+                document.getElementById('global-loader').classList.remove('hidden');
+            }
+        });
+    </script>
+
+    <div class="layout-wrapper layout-content-navbar">
+        <div class="layout-container">
+            <!-- Menu -->
+            <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+                <div class="app-brand demo">
+                    <a href="index.php" class="app-brand-link">
+                        <img src="https://www.franchiseindia.com/newhomepage/assets/img/Logo.svg" alt="FranchiseIndia Logo" style="max-height: 35px; margin-left: 0.5rem;" />
+                    </a>
+                    <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block">
+                        <i class="bx bx-menu bx-sm align-middle"></i>
+                    </a>
+                </div>
+                <div class="menu-inner-shadow"></div>
+                <ul class="menu-inner py-1">
+                    <li class="menu-item ">
+                        <a href="index.php" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-home-circle"></i>
+                            <div data-i18n="Dashboard">Dashboard</div>
+                        </a>
+                    </li>
+                    <li class="menu-item ">
+                        <a href="investors.php" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-user"></i>
+                            <div data-i18n="Investors">Investors</div>
+                        </a>
+                    </li>
+                    <li class="menu-item ">
+                        <a href="franchisors.php" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-store"></i>
+                            <div data-i18n="Franchisors">Franchisors</div>
+                        </a>
+                    </li>
+                    <li class="menu-item ">
+                        <a href="meetings.php" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-calendar-event"></i>
+                            <div data-i18n="Meetings">Meetings</div>
+                        </a>
+                    </li>
+                    <li class="menu-item ">
+                        <a href="shortlisted.php" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-list-check"></i>
+                            <div data-i18n="Matched Investors">Matched Investors</div>
+                        </a>
+                    </li>
+                    <li class="menu-item ">
+                        <a href="matches.php" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-target-lock"></i>
+                            <div data-i18n="Matchmaking">Match Engine</div>
+                        </a>
+                    </li>
+                    <li class="menu-item ">
+                        <a href="logs.php" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-history"></i>
+                            <div data-i18n="Activity Logs">Activity Logs</div>
+                        </a>
+                    </li>
+                                        <li class="menu-header small text-uppercase">
+                      <span class="menu-header-text">Administration</span>
+                    </li>
+                    <li class="menu-item ">
+                        <a href="users.php" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-group"></i>
+                            <div data-i18n="Users">User Management</div>
+                        </a>
+                    </li>
+                                    </ul>
+            </aside>
+            <!-- / Menu -->
+
+            <!-- Layout container -->
+            <div class="layout-page">
+                <!-- Navbar -->
+                <nav class="layout-navbar container-xxl navbar navbar-expand-xl navbar-detached align-items-center bg-navbar-theme" id="layout-navbar">
+                    <div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+                        <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+                            <i class="bx bx-menu bx-sm"></i>
+                        </a>
+                    </div>
+                    <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+                        <!-- Date Info -->
+                        <div class="navbar-nav align-items-center">
+                            <div class="nav-item d-flex align-items-center fw-medium text-muted">
+                                <i class="bx bx-calendar fs-4 lh-0 me-2"></i>
+                                <span>Wednesday, May 6, 2026</span>
+                            </div>
+                        </div>
+                        <!-- /Date Info -->
+
+                        <ul class="navbar-nav flex-row align-items-center ms-auto">
+                            <li class="nav-item navbar-dropdown dropdown-user dropdown">
+                                <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <div class="avatar avatar-online">
+                                        <img src="../assets/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <div class="avatar avatar-online">
+                                                        <img src="../assets/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <span class="fw-medium d-block">
+Warning: Undefined array key "username" in C:\xampp\htdocs\FMC\crm\header.php on line 183
+</span>
+                                                    <small class="text-muted">Admin</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li><div class="dropdown-divider"></div></li>
+                                    <li>
+                                        <a class="dropdown-item" href="logout.php">
+                                            <i class="bx bx-power-off me-2"></i>
+                                            <span class="align-middle">Log Out</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <!-- / Navbar -->
+                <!-- Content wrapper -->
+                <div class="content-wrapper">
+                    <!-- Content -->
+                    <div class="container-xxl flex-grow-1 container-p-y">
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Filter Investors</h5>
+                <a class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" href="#filterCollapse" role="button" aria-expanded="false" aria-controls="filterCollapse">
+                    Toggle Filters
+                </a>
+            </div>
+            <div class="collapse show" id="filterCollapse">
+                <div class="card-body border-top">
+                    <form method="GET">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Search Keyword</label>
+                                <input type="text" name="search" class="form-control" placeholder="Search by company..." value="">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">State</label>
+                                <input type="text" name="state" class="form-control" placeholder="e.g. Delhi" value="">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">City</label>
+                                <input type="text" name="city" class="form-control" placeholder="e.g. New Delhi" value="">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Min Investment</label>
+                                <input type="number" name="inv_min" class="form-control" placeholder="0" value="">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Max Investment</label>
+                                <input type="number" name="inv_max" class="form-control" placeholder="10000000" value="">
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end justify-content-end">
+                                <a href="investors.php" class="btn btn-outline-secondary me-2">Reset</a>
+                                <button type="submit" class="btn btn-primary"><i class="bx bx-search me-1"></i> Apply Filters</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Investors Directory <span class="badge bg-label-primary ms-2">57 total</span></h5>
+    </div>
+    <div class="table-responsive text-nowrap">
+        <table class="table table-hover table-striped">
+            <thead class="table-light">
+                <tr>
+                    <th>Sr. No.</th>
+                    <th>Investor ID</th>
+                    <th>Name & Contact</th>
+                    <th>Service Company</th>
+                    <th>Location / Match Prefs</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="table-border-bottom-0">
+                                                        <tr>
+                        <td><strong>1</strong></td>
+                        <td><span class="text-primary fw-medium">FIHL573664</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xs me-2">
+                                    <span class="avatar-initial rounded-circle bg-label-success"><i class="bx bx-user"></i></span>
+                                </div>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark">N/A</span>
+                                    <small class="text-muted"><i class="bx bx-phone"></i> N/A</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>-</td>
+                        <td>
+                            <div class="mb-1">
+                                <i class="bx bx-map text-danger"></i> Ambala, Haryana                            </div>
+                                                        <div class="small text-muted bg-lighter p-1 rounded">
+                                <span class="d-block"><i class="bx bx-target-lock text-primary"></i> <strong>Pref:</strong> faridabad Haryana</span>
+                                <span class="d-block"><i class="bx bx-rupee text-success"></i> <strong>Budget:</strong> 0-5L</span>
+                            </div>
+                                                    </td>
+                        <td class="text-center">
+                            <a href="view.php?type=investor&id=63" class="btn btn-sm btn-outline-primary">
+                                <i class="bx bx-show me-1"></i> Profile
+                            </a>
+                        </td>
+                    </tr>
+                                        <tr>
+                        <td><strong>2</strong></td>
+                        <td><span class="text-primary fw-medium">FIHL281958</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xs me-2">
+                                    <span class="avatar-initial rounded-circle bg-label-success"><i class="bx bx-user"></i></span>
+                                </div>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark">N/A</span>
+                                    <small class="text-muted"><i class="bx bx-phone"></i> N/A</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>-</td>
+                        <td>
+                            <div class="mb-1">
+                                <i class="bx bx-map text-danger"></i> Faridabad, Haryana                            </div>
+                                                    </td>
+                        <td class="text-center">
+                            <a href="view.php?type=investor&id=62" class="btn btn-sm btn-outline-primary">
+                                <i class="bx bx-show me-1"></i> Profile
+                            </a>
+                        </td>
+                    </tr>
+                                        <tr>
+                        <td><strong>3</strong></td>
+                        <td><span class="text-primary fw-medium">FIHL352054</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xs me-2">
+                                    <span class="avatar-initial rounded-circle bg-label-success"><i class="bx bx-user"></i></span>
+                                </div>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark">N/A</span>
+                                    <small class="text-muted"><i class="bx bx-phone"></i> N/A</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>-</td>
+                        <td>
+                            <div class="mb-1">
+                                <i class="bx bx-map text-danger"></i> Mewat, Haryana                            </div>
+                                                    </td>
+                        <td class="text-center">
+                            <a href="view.php?type=investor&id=61" class="btn btn-sm btn-outline-primary">
+                                <i class="bx bx-show me-1"></i> Profile
+                            </a>
+                        </td>
+                    </tr>
+                                        <tr>
+                        <td><strong>4</strong></td>
+                        <td><span class="text-primary fw-medium">FIHL223460</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xs me-2">
+                                    <span class="avatar-initial rounded-circle bg-label-success"><i class="bx bx-user"></i></span>
+                                </div>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark">N/A</span>
+                                    <small class="text-muted"><i class="bx bx-phone"></i> N/A</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>-</td>
+                        <td>
+                            <div class="mb-1">
+                                <i class="bx bx-map text-danger"></i> Faridabad, Haryana                            </div>
+                                                    </td>
+                        <td class="text-center">
+                            <a href="view.php?type=investor&id=60" class="btn btn-sm btn-outline-primary">
+                                <i class="bx bx-show me-1"></i> Profile
+                            </a>
+                        </td>
+                    </tr>
+                                        <tr>
+                        <td><strong>5</strong></td>
+                        <td><span class="text-primary fw-medium">FIHL579102</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xs me-2">
+                                    <span class="avatar-initial rounded-circle bg-label-success"><i class="bx bx-user"></i></span>
+                                </div>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark">N/A</span>
+                                    <small class="text-muted"><i class="bx bx-phone"></i> N/A</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>-</td>
+                        <td>
+                            <div class="mb-1">
+                                <i class="bx bx-map text-danger"></i> Faridabad, Haryana                            </div>
+                                                    </td>
+                        <td class="text-center">
+                            <a href="view.php?type=investor&id=59" class="btn btn-sm btn-outline-primary">
+                                <i class="bx bx-show me-1"></i> Profile
+                            </a>
+                        </td>
+                    </tr>
+                                        <tr>
+                        <td><strong>6</strong></td>
+                        <td><span class="text-primary fw-medium">FIHL664397</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xs me-2">
+                                    <span class="avatar-initial rounded-circle bg-label-success"><i class="bx bx-user"></i></span>
+                                </div>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark">N/A</span>
+                                    <small class="text-muted"><i class="bx bx-phone"></i> N/A</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>-</td>
+                        <td>
+                            <div class="mb-1">
+                                <i class="bx bx-map text-danger"></i> Faridabad, Haryana                            </div>
+                                                    </td>
+                        <td class="text-center">
+                            <a href="view.php?type=investor&id=58" class="btn btn-sm btn-outline-primary">
+                                <i class="bx bx-show me-1"></i> Profile
+                            </a>
+                        </td>
+                    </tr>
+                                        <tr>
+                        <td><strong>7</strong></td>
+                        <td><span class="text-primary fw-medium">FIHL297034</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xs me-2">
+                                    <span class="avatar-initial rounded-circle bg-label-success"><i class="bx bx-user"></i></span>
+                                </div>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark">N/A</span>
+                                    <small class="text-muted"><i class="bx bx-phone"></i> N/A</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>-</td>
+                        <td>
+                            <div class="mb-1">
+                                <i class="bx bx-map text-danger"></i> Faridabad, Haryana                            </div>
+                                                    </td>
+                        <td class="text-center">
+                            <a href="view.php?type=investor&id=57" class="btn btn-sm btn-outline-primary">
+                                <i class="bx bx-show me-1"></i> Profile
+                            </a>
+                        </td>
+                    </tr>
+                                        <tr>
+                        <td><strong>8</strong></td>
+                        <td><span class="text-primary fw-medium">FIHL994743</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xs me-2">
+                                    <span class="avatar-initial rounded-circle bg-label-success"><i class="bx bx-user"></i></span>
+                                </div>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark">N/A</span>
+                                    <small class="text-muted"><i class="bx bx-phone"></i> N/A</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>-</td>
+                        <td>
+                            <div class="mb-1">
+                                <i class="bx bx-map text-danger"></i> Ambala, Haryana                            </div>
+                                                    </td>
+                        <td class="text-center">
+                            <a href="view.php?type=investor&id=56" class="btn btn-sm btn-outline-primary">
+                                <i class="bx bx-show me-1"></i> Profile
+                            </a>
+                        </td>
+                    </tr>
+                                        <tr>
+                        <td><strong>9</strong></td>
+                        <td><span class="text-primary fw-medium">FIHL383975</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xs me-2">
+                                    <span class="avatar-initial rounded-circle bg-label-success"><i class="bx bx-user"></i></span>
+                                </div>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark">N/A</span>
+                                    <small class="text-muted"><i class="bx bx-phone"></i> N/A</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>-</td>
+                        <td>
+                            <div class="mb-1">
+                                <i class="bx bx-map text-danger"></i> Faridabad, Haryana                            </div>
+                                                    </td>
+                        <td class="text-center">
+                            <a href="view.php?type=investor&id=55" class="btn btn-sm btn-outline-primary">
+                                <i class="bx bx-show me-1"></i> Profile
+                            </a>
+                        </td>
+                    </tr>
+                                        <tr>
+                        <td><strong>10</strong></td>
+                        <td><span class="text-primary fw-medium">FIHL232590</span></td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xs me-2">
+                                    <span class="avatar-initial rounded-circle bg-label-success"><i class="bx bx-user"></i></span>
+                                </div>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-dark">N/A</span>
+                                    <small class="text-muted"><i class="bx bx-phone"></i> N/A</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>-</td>
+                        <td>
+                            <div class="mb-1">
+                                <i class="bx bx-map text-danger"></i> Ambala, Haryana                            </div>
+                                                    </td>
+                        <td class="text-center">
+                            <a href="view.php?type=investor&id=54" class="btn btn-sm btn-outline-primary">
+                                <i class="bx bx-show me-1"></i> Profile
+                            </a>
+                        </td>
+                    </tr>
+                                                </tbody>
+        </table>
+    </div>
+
+            <div class="card-footer d-flex justify-content-center border-top">
+        <nav aria-label="Page navigation">
+            <ul class="pagination mb-0">
+                <li class="page-item disabled">
+                    <a class="page-link" href="?page=0&search=&state=&city=&inv_min=&inv_max="><i class="tf-icon bx bx-chevron-left"></i></a>
+                </li>
+                                <li class="page-item active">
+                    <a class="page-link" href="?page=1&search=&state=&city=&inv_min=&inv_max=">1</a>
+                </li>
+                                <li class="page-item ">
+                    <a class="page-link" href="?page=2&search=&state=&city=&inv_min=&inv_max=">2</a>
+                </li>
+                                <li class="page-item ">
+                    <a class="page-link" href="?page=3&search=&state=&city=&inv_min=&inv_max=">3</a>
+                </li>
+                                <li class="page-item ">
+                    <a class="page-link" href="?page=2&search=&state=&city=&inv_min=&inv_max="><i class="tf-icon bx bx-chevron-right"></i></a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    </div>
+
+                    </div>
+                    <!-- / Content -->
+                    <!-- Footer -->
+                    <footer class="content-footer footer bg-footer-theme">
+                        <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                            <div class="mb-2 mb-md-0">
+                                © <script>document.write(new Date().getFullYear());</script>
+                                , made with ❤️ by CRM Team
+                            </div>
+                        </div>
+                    </footer>
+                    <!-- / Footer -->
+                    <div class="content-backdrop fade"></div>
+                </div>
+                <!-- Content wrapper -->
+            </div>
+            <!-- / Layout page -->
+        </div>
+        <!-- Overlay -->
+        <div class="layout-overlay layout-menu-toggle"></div>
+    </div>
+    <!-- / Layout wrapper -->
+
+    <script src="../assets/vendor/libs/jquery/jquery.js"></script>
+    <script src="../assets/vendor/libs/popper/popper.js"></script>
+    <script src="../assets/vendor/js/bootstrap.js"></script>
+    <script src="../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+    <script src="../assets/vendor/js/menu.js"></script>
+    <script src="../assets/js/main.js"></script>
+</body>
+</html>
