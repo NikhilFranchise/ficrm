@@ -54,10 +54,13 @@ $role = $_SESSION['role'];
     </div>
     
     <script>
-        // Hide loader when page is fully loaded
-        window.addEventListener('load', function() {
+        // Hide loader when page is fully loaded or shown from cache (back button)
+        function hideLoader() {
             document.getElementById('global-loader').classList.add('hidden');
-        });
+        }
+
+        window.addEventListener('load', hideLoader);
+        window.addEventListener('pageshow', hideLoader);
         
         // Show loader when a form is submitted
         document.addEventListener('submit', function() {

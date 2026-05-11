@@ -28,8 +28,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     } elseif ($_POST['action'] === 'delete_user') {
         $id = (int)$_POST['user_id'];
         if ($id !== $_SESSION['user_id']) { // prevent self deletion
-            $stmt = $pdoCrm->prepare("DELETE FROM users WHERE id = ?");
-            $stmt->execute([$id]);
+            try {
+                $pdoCrm->beginTransaction();
+                
+                // Remove dependencies
+                $pdoCrm->prepare("DELETE FROM activity_logs WHERE user_id = ?")->execute([$id]);
+                $pdoCrm->prepare("DELETE FROM meetings WHERE salesman_id = ?")->execute([$id]);
+                $pdoCrm->prepare("DELETE FROM investor_crm_status WHERE updated_by = ?")->execute([$id]);
+                
+                // Delete user
+                $pdoCrm->prepare("DELETE FROM users WHERE id = ?")->execute([$id]);
+                
+                $pdoCrm->commit();
+            } catch (Exception $e) {
+                $pdoCrm->rollBack();
+                header("Location: users.php?msg=error&detail=" . urlencode($e->getMessage()));
+                exit;
+            }
         }
     }
     header("Location: users.php?msg=success");

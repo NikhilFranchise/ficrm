@@ -228,7 +228,16 @@ $masterCats = $catMapping['SeoCategoryArr'] ?? [];
 
 if ($isInvestor) {
     $apiRes = fetchSingleFromApi('investor', $id);
-    $record = ($apiRes['status'] === 'success' && !empty($apiRes['data'])) ? $apiRes['data'] : null;
+    $record = $apiRes['data'] ?? null;
+    
+    // Fetch local extended details
+    $stmt = $pdoCrm->prepare("SELECT * FROM crm_investor_details WHERE investor_id = ?");
+    $stmt->execute([$id]);
+    $localDetails = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    
+    if ($record) {
+        $record = array_merge($record, $localDetails);
+    }
 } else {
     // Local Franchisor - Support both internal ID and manual franchisor_id
     $stmt = $pdoCrm->prepare("SELECT * FROM crm_franchisors WHERE id = ? OR franchisor_id = ? LIMIT 1");
@@ -431,7 +440,6 @@ $statShortlists = count($shortlists);
                                 <button class="btn btn-sm btn-outline-warning btn-edit-investor" 
                                         data-id="<?= $record['id'] ?>"
                                         data-email="<?= htmlspecialchars($record['email']) ?>"
-                                        data-mobile="<?= htmlspecialchars($record['mobile']) ?>"
                                         data-min="<?= $record['min_investment'] ?>"
                                         data-max="<?= $record['max_investment'] ?>"
                                         data-cat="<?= htmlspecialchars($record['category_interested'] ?? '') ?>">
@@ -644,6 +652,127 @@ $statShortlists = count($shortlists);
                 </div>
             </div>
         </div>
+
+        <?php if($isInvestor && !empty($localDetails)): ?>
+        <!-- Extended Local Details Section -->
+        <div class="card mt-4 shadow-none border">
+            <div class="card-header d-flex justify-content-between align-items-center bg-lighter">
+                <h5 class="mb-0 text-primary fw-bold"><i class="bx bx-stats me-1"></i> Financial & Property Profile</h5>
+                <span class="badge bg-label-primary">Extended Data</span>
+            </div>
+            <div class="card-body pt-4">
+                <div class="row g-4">
+                    <!-- Professional & Education -->
+                    <div class="col-md-6 border-end">
+                        <h6 class="text-muted text-uppercase small fw-bold mb-3">Professional Background</h6>
+                        <div class="d-flex flex-column gap-2">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Education:</span>
+                                <span class="fw-medium text-dark"><?= htmlspecialchars($record['qualification'] ?? 'Not Specified') ?></span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Occupation:</span>
+                                <span class="fw-medium text-dark"><?= htmlspecialchars($record['occupation'] ?? 'Not Specified') ?></span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Monthly Income:</span>
+                                <span class="fw-medium text-dark"><?= htmlspecialchars($record['income_range'] ?? 'Not Specified') ?></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Financial Info -->
+                    <div class="col-md-6 ps-md-4">
+                        <h6 class="text-muted text-uppercase small fw-bold mb-3">Financial Profile</h6>
+                        <div class="d-flex flex-column gap-2">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Available Capital:</span>
+                                <span class="fw-bold text-success"><?= htmlspecialchars($record['available_capital'] ?? 'Not Specified') ?></span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Investment Range:</span>
+                                <span class="fw-medium text-dark">₹<?= number_format((float)($record['min_investment']??0)) ?> - ₹<?= number_format((float)($record['max_investment']??0)) ?></span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Loan Interest:</span>
+                                <span><?= ($record['loan_interest']??0) ? '<span class="badge bg-label-success">Yes</span>' : '<span class="badge bg-label-secondary">No</span>' ?></span>
+                            </div>
+                            <?php if($record['loan_interest']??0): ?>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Loan Range:</span>
+                                    <span class="fw-medium text-dark"><?= htmlspecialchars($record['loan_range'] ?? '') ?></span>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="col-12"><hr class="my-0"></div>
+
+                    <!-- Property Details -->
+                    <div class="col-md-12">
+                        <h6 class="text-muted text-uppercase small fw-bold mb-3">Property & Assets</h6>
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="p-2 border rounded bg-light">
+                                    <small class="text-muted d-block">Owns Property?</small>
+                                    <span class="fw-bold h6 mb-0"><?= ($record['is_property_own']??0) ? 'Yes' : 'No' ?></span>
+                                </div>
+                            </div>
+                            <?php if($record['is_property_own']??0): ?>
+                            <div class="col-md-4">
+                                <div class="p-2 border rounded bg-light">
+                                    <small class="text-muted d-block">Property Type</small>
+                                    <span class="fw-bold h6 mb-0"><?= htmlspecialchars($record['property_type_mortgage'] ?? 'N/A') ?></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-2 border rounded bg-light">
+                                    <small class="text-muted d-block">Area / Value</small>
+                                    <span class="fw-bold h6 mb-0"><?= htmlspecialchars($record['property_size_mortgage'] ?? '') ?> / <?= htmlspecialchars($record['property_value_mortgage'] ?? '') ?></span>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Preferences -->
+                    <div class="col-12"><hr class="my-0"></div>
+                    <div class="col-md-12">
+                        <h6 class="text-muted text-uppercase small fw-bold mb-3">Investment Preferences</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="bx bx-map-pin me-2 text-primary"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Target Location</small>
+                                        <span class="fw-medium"><?= htmlspecialchars($record['business_city_looking'] ?? 'Any') ?>, <?= htmlspecialchars($record['business_state_looking'] ?? 'Any') ?></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="bx bx-time-five me-2 text-primary"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Timeframe</small>
+                                        <span class="fw-medium"><?= htmlspecialchars($record['investment_date'] ?? 'Flexible') ?></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="bx bx-info-circle me-2 text-primary"></i>
+                                    <div>
+                                        <small class="text-muted d-block">Loan Purpose</small>
+                                        <span class="small text-muted"><?= htmlspecialchars($record['loan_purpose'] ?? 'N/A') ?></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 
     <!-- Right Column: Actions & Timeline -->
@@ -793,7 +922,16 @@ $statShortlists = count($shortlists);
                                 <?php endif; ?>
 
                                 <div class="mt-1">
-                                    <?= nl2br(htmlspecialchars($item['notes'])) ?>
+                                    <?php 
+                                    $notes = htmlspecialchars($item['notes']);
+                                    if(strlen($notes) > 150): 
+                                        echo nl2br(substr($notes, 0, 150)) . '...';
+                                    ?>
+                                        <a href="javascript:void(0);" class="text-primary d-block mt-1" 
+                                           onclick='showFullNote(<?= json_encode($item['notes']) ?>)'>View Full Note</a>
+                                    <?php else: ?>
+                                        <?= nl2br($notes) ?>
+                                    <?php endif; ?>
                                 </div>
                                 <?php if(!empty($item['follow_up_date'])): ?>
                                     <div class="mt-2">
@@ -910,6 +1048,11 @@ $statShortlists = count($shortlists);
 <?php require_once 'footer.php'; ?>
 
 <script>
+function showFullNote(content) {
+    document.getElementById('fullNoteContent').innerText = content;
+    new bootstrap.Modal(document.getElementById('fullNoteModal')).show();
+}
+
 // Use relative path for local categories API
 const CAT_API_URL = 'api_export/ajax_categories.php';
 
@@ -1083,46 +1226,165 @@ document.addEventListener("DOMContentLoaded", function() {
 <?php if ($isInvestor): ?>
 <!-- Edit Investor Modal -->
 <div class="modal fade" id="editInvestorModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Edit Investor Details</h5>
+      <div class="modal-header bg-primary">
+        <h5 class="modal-title text-white">Comprehensive Investor Edit</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form id="editInvestorForm">
         <div class="modal-body">
             <input type="hidden" name="id" id="edit_id">
-            <div class="mb-3">
-                <label class="form-label">Email</label>
-                <input type="email" name="email" id="edit_email" class="form-control" required>
+            
+            <!-- Section 1: Personal Details -->
+            <div class="divider text-start mb-4">
+                <div class="divider-text fw-bold text-primary"><i class="bx bx-user me-1"></i> Personal Details</div>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Phone / Mobile</label>
-                <input type="text" name="mobile" id="edit_mobile" class="form-control" required>
-            </div>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Min Investment</label>
-                    <input type="number" name="min_investment" id="edit_min" class="form-control" required>
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label">Title</label>
+                    <select name="title" id="edit_title" class="form-select">
+                        <option value="1">Mr.</option>
+                        <option value="2">Mrs.</option>
+                        <option value="3">Ms.</option>
+                    </select>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Max Investment</label>
-                    <input type="number" name="max_investment" id="edit_max" class="form-control" required>
+                <div class="col-md-5">
+                    <label class="form-label">First Name</label>
+                    <input type="text" name="name" id="edit_name" class="form-control" required>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" name="last_name" id="edit_last_name" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" id="edit_email" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Pincode</label>
+                    <input type="text" name="pincode" id="edit_pincode" class="form-control">
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">Full Address</label>
+                    <textarea name="address" id="edit_address" class="form-control" rows="2"></textarea>
                 </div>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Category Interested</label>
-                <select name="category_interested" id="edit_cat" class="form-select">
-                    <option value="">Select Category</option>
-                    <?php foreach($masterCats as $cid => $cname): ?>
-                        <option value="<?= htmlspecialchars($cname) ?>"><?= ucwords(str_replace('-', ' ', $cname)) ?></option>
-                    <?php endforeach; ?>
-                </select>
+
+            <!-- Section 2: Professional & Financial -->
+            <div class="divider text-start my-4">
+                <div class="divider-text fw-bold text-primary"><i class="bx bx-briefcase me-1"></i> Professional & Financial</div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Education Qualification</label>
+                    <select name="qualification" id="edit_qualification" class="form-select">
+                        <option value="">Select Qualification</option>
+                        <option value="Graduate">Graduate</option>
+                        <option value="Post Graduate">Post Graduate</option>
+                        <option value="Undergraduate">Undergraduate</option>
+                        <option value="Professional">Professional</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Occupation</label>
+                    <select name="occupation" id="edit_occupation" class="form-select">
+                        <option value="">Select Occupation</option>
+                        <option value="Business">Business</option>
+                        <option value="Service">Service</option>
+                        <option value="Professional">Professional</option>
+                        <option value="Self Employed">Self Employed</option>
+                        <option value="Retired">Retired</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Min Investment (₹)</label>
+                    <input type="number" name="min_investment" id="edit_min" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Max Investment (₹)</label>
+                    <input type="number" name="max_investment" id="edit_max" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Available Capital</label>
+                    <input type="text" name="available_capital" id="edit_available_capital" class="form-control">
+                </div>
+            </div>
+
+            <!-- Section 3: Loan & Property -->
+            <div class="divider text-start my-4">
+                <div class="divider-text fw-bold text-primary"><i class="bx bx-home me-1"></i> Loan & Property Details</div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Need for loan?</label>
+                    <select name="loan_interest" id="edit_loan_interest" class="form-select">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Loan Range</label>
+                    <input type="text" name="loan_range" id="edit_loan_range" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Current Monthly Income</label>
+                    <input type="text" name="income_range" id="edit_income_range" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Own Property?</label>
+                    <select name="is_property_own" id="edit_is_property_own" class="form-select">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Mortgage Property Type</label>
+                    <input type="text" name="property_type_mortgage" id="edit_property_type" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Property Size (Sq.ft)</label>
+                    <input type="text" name="property_size_mortgage" id="edit_property_size" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Property Value (₹)</label>
+                    <input type="text" name="property_value_mortgage" id="edit_property_value" class="form-control">
+                </div>
+            </div>
+
+            <!-- Section 4: Preferences -->
+            <div class="divider text-start my-4">
+                <div class="divider-text fw-bold text-primary"><i class="bx bx-target-lock me-1"></i> Investment Preferences</div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Category Interested In</label>
+                    <select name="category_interested" id="edit_cat" class="form-select">
+                        <option value="">Select Category</option>
+                        <?php foreach($masterCats as $cname): ?>
+                            <option value="<?= htmlspecialchars($cname) ?>"><?= ucwords(str_replace('-', ' ', $cname)) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Investment Timeframe</label>
+                    <input type="text" name="investment_date" id="edit_investment_date" class="form-control" placeholder="e.g. Within 3 months">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Looking for Business in (State)</label>
+                    <input type="text" name="business_state_looking" id="edit_state_looking" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Looking for Business in (City)</label>
+                    <input type="text" name="business_city_looking" id="edit_city_looking" class="form-control">
+                </div>
             </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary">Save Changes</button>
+          <button type="submit" class="btn btn-primary btn-lg px-5">Update Profile</button>
         </div>
       </form>
     </div>
@@ -1138,36 +1400,69 @@ document.addEventListener('DOMContentLoaded', function() {
     const editForm = document.getElementById('editInvestorForm');
 
     editBtn.addEventListener('click', function() {
-        document.getElementById('edit_id').value = this.dataset.id;
-        document.getElementById('edit_email').value = this.dataset.email;
-        document.getElementById('edit_mobile').value = this.dataset.mobile;
-        document.getElementById('edit_min').value = this.dataset.min;
-        document.getElementById('edit_max').value = this.dataset.max;
-        document.getElementById('edit_cat').value = this.dataset.cat;
+        const data = <?= json_encode($record) ?>;
+        if(!data) return;
+        
+        document.getElementById('edit_id').value = data.id || '';
+        document.getElementById('edit_title').value = data.title || '';
+        document.getElementById('edit_name').value = data.name || '';
+        document.getElementById('edit_last_name').value = data.last_name || '';
+        document.getElementById('edit_email').value = data.email || '';
+        document.getElementById('edit_pincode').value = data.pincode || '';
+        document.getElementById('edit_address').value = data.address || '';
+        document.getElementById('edit_qualification').value = data.qualification || '';
+        document.getElementById('edit_occupation').value = data.occupation || '';
+        document.getElementById('edit_min').value = data.min_investment || '';
+        document.getElementById('edit_max').value = data.max_investment || '';
+        document.getElementById('edit_available_capital').value = data.available_capital || '';
+        document.getElementById('edit_loan_interest').value = data.loan_interest || 0;
+        document.getElementById('edit_loan_range').value = data.loan_range || '';
+        document.getElementById('edit_income_range').value = data.income_range || '';
+        document.getElementById('edit_is_property_own').value = data.is_property_own || 0;
+        document.getElementById('edit_property_type').value = data.property_type_mortgage || '';
+        document.getElementById('edit_property_size').value = data.property_size_mortgage || '';
+        document.getElementById('edit_property_value').value = data.property_value_mortgage || '';
+        document.getElementById('edit_cat').value = data.category_interested || '';
+        document.getElementById('edit_investment_date').value = data.investment_date || '';
+        document.getElementById('edit_state_looking').value = data.business_state_looking || '';
+        document.getElementById('edit_city_looking').value = data.business_city_looking || '';
+        
         editModal.show();
     });
 
     editForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const formData = new FormData(this);
+        formData.append('updated_by', '<?= $_SESSION['username'] ?? 'Unknown' ?>');
         const apiBase = "<?= API_BASE_URL ?>";
         
-        fetch(apiBase + "/api_investor_update.php", {
+        // 1. Local Backup & Local Details Update FIRST
+        fetch('api_export/ajax_investor_local_update.php', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(res => res.json())
+        .then(data => {
+            if (data.status !== 'success') {
+                throw new Exception("Local backup failed: " + data.message);
+            }
+            // 2. Remote Master Update SECOND
+            return fetch(apiBase + "/api_investor_update.php", {
+                method: 'POST',
+                body: formData
+            });
+        })
+        .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
-                alert(data.message);
                 location.reload();
             } else {
-                alert('Error: ' + data.message);
+                alert("Master update error: " + data.message);
             }
         })
         .catch(err => {
             console.error(err);
-            alert('Failed to update investor.');
+            alert("Process failed. Please check your connection.");
         });
     });
 });

@@ -102,7 +102,6 @@ $totalPages = ceil($total / $limit);
                             <button class="btn btn-sm btn-outline-warning btn-edit-investor" 
                                     data-id="<?= $inv['id'] ?>"
                                     data-email="<?= htmlspecialchars($inv['email']) ?>"
-                                    data-mobile="<?= htmlspecialchars($inv['mobile']) ?>"
                                     data-min="<?= $inv['min_investment'] ?>"
                                     data-max="<?= $inv['max_investment'] ?>"
                                     data-cat="<?= htmlspecialchars($inv['category_interested'] ?? '') ?>">
@@ -157,10 +156,6 @@ $totalPages = ceil($total / $limit);
                 <label class="form-label">Email</label>
                 <input type="email" name="email" id="edit_email" class="form-control" required>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Phone / Mobile</label>
-                <input type="text" name="mobile" id="edit_mobile" class="form-control" required>
-            </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Min Investment</label>
@@ -200,7 +195,6 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', function() {
             document.getElementById('edit_id').value = this.dataset.id;
             document.getElementById('edit_email').value = this.dataset.email;
-            document.getElementById('edit_mobile').value = this.dataset.mobile;
             document.getElementById('edit_min').value = this.dataset.min;
             document.getElementById('edit_max').value = this.dataset.max;
             document.getElementById('edit_cat').value = this.dataset.cat;

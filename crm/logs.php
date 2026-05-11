@@ -27,7 +27,21 @@ if ($search_id !== '') {
     $params[':search_id'] = $search_id;
 }
 
-// Fetch Franchisor Logs - Join with local crm_franchisors
+// Pagination Config
+$limit = 10;
+
+// Franchisor Pagination
+$f_page = isset($_GET['f_page']) ? (int)$_GET['f_page'] : 1;
+if ($f_page < 1) $f_page = 1;
+$f_offset = ($f_page - 1) * $limit;
+
+$countFranQuery = "SELECT COUNT(*) FROM activity_logs a WHERE a.entity_type = 'franchisor' $ufWhere $filterWhere";
+$stmtCountFran = $pdoCrm->prepare($countFranQuery);
+$stmtCountFran->execute($params);
+$totalFran = (int)$stmtCountFran->fetchColumn();
+$totalFranPages = ceil($totalFran / $limit);
+
+// Fetch Franchisor Logs
 $queryFran = "
     SELECT a.*, u.username, f.brand_name, f.company_name, f.franchisor_id as manual_id
     FROM activity_logs a 
@@ -35,10 +49,22 @@ $queryFran = "
     LEFT JOIN crm_franchisors f ON (a.entity_id = f.id OR a.entity_id = f.franchisor_id)
     WHERE a.entity_type = 'franchisor' $ufWhere $filterWhere
     ORDER BY a.created_at DESC
+    LIMIT $limit OFFSET $f_offset
 ";
 $stmtFran = $pdoCrm->prepare($queryFran);
 $stmtFran->execute($params);
 $franLogs = $stmtFran->fetchAll();
+
+// Investor Pagination
+$i_page = isset($_GET['i_page']) ? (int)$_GET['i_page'] : 1;
+if ($i_page < 1) $i_page = 1;
+$i_offset = ($i_page - 1) * $limit;
+
+$countInvQuery = "SELECT COUNT(*) FROM activity_logs a WHERE a.entity_type = 'investor' $ufWhere $filterWhere";
+$stmtCountInv = $pdoCrm->prepare($countInvQuery);
+$stmtCountInv->execute($params);
+$totalInv = (int)$stmtCountInv->fetchColumn();
+$totalInvPages = ceil($totalInv / $limit);
 
 // Fetch Investor Logs
 $queryInv = "
@@ -47,6 +73,7 @@ $queryInv = "
     JOIN users u ON a.user_id = u.id 
     WHERE a.entity_type = 'investor' $ufWhere $filterWhere
     ORDER BY a.created_at DESC
+    LIMIT $limit OFFSET $i_offset
 ";
 $stmtInv = $pdoCrm->prepare($queryInv);
 $stmtInv->execute($params);
@@ -54,7 +81,7 @@ $invLogsRaw = $stmtInv->fetchAll();
 
 // Get real IDs for investors from Lead Management API
 $invIds = array_unique(array_column($invLogsRaw, 'entity_id'));
-$invApiRes = fetchBulkFromApi('investor', $invIds);
+$invApiRes = !empty($invIds) ? fetchBulkFromApi('investor', $invIds) : ['data' => []];
 $invMap = $invApiRes['data'] ?? [];
 
 $invLogs = [];
@@ -96,13 +123,13 @@ foreach($invLogsRaw as $log) {
         <li class="nav-item">
             <button type="button" class="nav-link active" role="tab" data-bs-toggle="tab" data-bs-target="#navs-fran">
                 <i class="bx bx-store-alt me-1"></i> Franchisor Logs
-                <span class="badge rounded-pill badge-center h-px-20 w-px-20 bg-label-primary ms-1"><?= count($franLogs) ?></span>
+                <span class="badge rounded-pill badge-center h-px-20 w-px-20 bg-label-primary ms-1"><?= $totalFran ?></span>
             </button>
         </li>
         <li class="nav-item">
             <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#navs-inv">
                 <i class="bx bx-user me-1"></i> Investor Logs
-                <span class="badge rounded-pill badge-center h-px-20 w-px-20 bg-label-success ms-1"><?= count($invLogs) ?></span>
+                <span class="badge rounded-pill badge-center h-px-20 w-px-20 bg-label-success ms-1"><?= $totalInv ?></span>
             </button>
         </li>
     </ul>
@@ -145,8 +172,17 @@ foreach($invLogsRaw as $log) {
                                         <span class="badge bg-label-<?= $log['priority']=='High'?'danger':($log['priority']=='Medium'?'warning':'secondary') ?> ms-1"><?= htmlspecialchars($log['priority']) ?></span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="text-wrap" style="max-width: 400px;">
-                                    <?= nl2br(htmlspecialchars($log['notes'])) ?>
+                                <td class="text-wrap" style="max-width: 350px;">
+                                    <?php 
+                                    $notes = htmlspecialchars($log['notes']);
+                                    if(strlen($notes) > 100): 
+                                        echo nl2br(substr($notes, 0, 100)) . '...';
+                                    ?>
+                                        <a href="javascript:void(0);" class="text-primary d-block mt-1 small" 
+                                           onclick='showFullNote(<?= json_encode($log['notes']) ?>)'>View Full</a>
+                                    <?php else: ?>
+                                        <?= nl2br($notes) ?>
+                                    <?php endif; ?>
                                     <?php if($log['follow_up_date']): ?>
                                         <div class="mt-1"><small class="text-warning fw-bold"><i class="bx bx-calendar"></i> Follow up: <?= htmlspecialchars($log['follow_up_date']) ?></small></div>
                                     <?php endif; ?>
@@ -158,6 +194,29 @@ foreach($invLogsRaw as $log) {
                     </tbody>
                 </table>
             </div>
+
+            <!-- Franchisor Pagination -->
+            <?php if($totalFranPages > 1): ?>
+            <nav class="mt-4">
+                <ul class="pagination pagination-sm justify-content-center">
+                    <li class="page-item <?= $f_page <= 1 ? 'disabled' : '' ?>">
+                        <a class="page-link" href="?f_page=<?= $f_page - 1 ?>&i_page=<?= $i_page ?>&date_from=<?= $date_from ?>&date_to=<?= $date_to ?>&search_id=<?= $search_id ?>">Previous</a>
+                    </li>
+                    <?php 
+                    $start = max(1, $f_page - 2);
+                    $end = min($totalFranPages, $f_page + 2);
+                    for($i=$start; $i<=$end; $i++): 
+                    ?>
+                        <li class="page-item <?= $i == $f_page ? 'active' : '' ?>">
+                            <a class="page-link" href="?f_page=<?= $i ?>&i_page=<?= $i_page ?>&date_from=<?= $date_from ?>&date_to=<?= $date_to ?>&search_id=<?= $search_id ?>"><?= $i ?></a>
+                        </li>
+                    <?php endfor; ?>
+                    <li class="page-item <?= $f_page >= $totalFranPages ? 'disabled' : '' ?>">
+                        <a class="page-link" href="?f_page=<?= $f_page + 1 ?>&i_page=<?= $i_page ?>&date_from=<?= $date_from ?>&date_to=<?= $date_to ?>&search_id=<?= $search_id ?>">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            <?php endif; ?>
         </div>
 
         <!-- Investor Tab -->
@@ -197,8 +256,17 @@ foreach($invLogsRaw as $log) {
                                         <span class="badge bg-label-<?= $log['priority']=='High'?'danger':($log['priority']=='Medium'?'warning':'secondary') ?> ms-1"><?= htmlspecialchars($log['priority']) ?></span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="text-wrap" style="max-width: 400px;">
-                                    <?= nl2br(htmlspecialchars($log['notes'])) ?>
+                                <td class="text-wrap" style="max-width: 350px;">
+                                    <?php 
+                                    $notes = htmlspecialchars($log['notes']);
+                                    if(strlen($notes) > 100): 
+                                        echo nl2br(substr($notes, 0, 100)) . '...';
+                                    ?>
+                                        <a href="javascript:void(0);" class="text-primary d-block mt-1 small" 
+                                           onclick='showFullNote(<?= json_encode($log['notes']) ?>)'>View Full</a>
+                                    <?php else: ?>
+                                        <?= nl2br($notes) ?>
+                                    <?php endif; ?>
                                     <?php if($log['follow_up_date']): ?>
                                         <div class="mt-1"><small class="text-warning fw-bold"><i class="bx bx-calendar"></i> Follow up: <?= htmlspecialchars($log['follow_up_date']) ?></small></div>
                                     <?php endif; ?>
@@ -210,8 +278,62 @@ foreach($invLogsRaw as $log) {
                     </tbody>
                 </table>
             </div>
+
+            <!-- Investor Pagination -->
+            <?php if($totalInvPages > 1): ?>
+            <nav class="mt-4">
+                <ul class="pagination pagination-sm justify-content-center">
+                    <li class="page-item <?= $i_page <= 1 ? 'disabled' : '' ?>">
+                        <a class="page-link" href="?i_page=<?= $i_page - 1 ?>&f_page=<?= $f_page ?>&date_from=<?= $date_from ?>&date_to=<?= $date_to ?>&search_id=<?= $search_id ?>">Previous</a>
+                    </li>
+                    <?php 
+                    $start = max(1, $i_page - 2);
+                    $end = min($totalInvPages, $i_page + 2);
+                    for($idx=$start; $idx<=$end; $idx++): 
+                    ?>
+                        <li class="page-item <?= $idx == $i_page ? 'active' : '' ?>">
+                            <a class="page-link" href="?i_page=<?= $idx ?>&f_page=<?= $f_page ?>&date_from=<?= $date_from ?>&date_to=<?= $date_to ?>&search_id=<?= $search_id ?>"><?= $idx ?></a>
+                        </li>
+                    <?php endfor; ?>
+                    <li class="page-item <?= $i_page >= $totalInvPages ? 'disabled' : '' ?>">
+                        <a class="page-link" href="?i_page=<?= $i_page + 1 ?>&f_page=<?= $f_page ?>&date_from=<?= $date_from ?>&date_to=<?= $date_to ?>&search_id=<?= $search_id ?>">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            <?php endif; ?>
         </div>
     </div>
 </div>
 
+<!-- Full Note View Modal -->
+<div class="modal fade" id="fullNoteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Activity Note</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+          <div id="fullNoteContent" style="white-space: pre-wrap;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <?php require_once 'footer.php'; ?>
+
+<script>
+function showFullNote(content) {
+    document.getElementById('fullNoteContent').innerText = content;
+    new bootstrap.Modal(document.getElementById('fullNoteModal')).show();
+}
+
+// Preserve active tab on pagination
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('i_page')) {
+        const invTab = document.querySelector('button[data-bs-target="#navs-inv"]');
+        if(invTab) invTab.click();
+    }
+});
+</script>

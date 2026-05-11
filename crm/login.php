@@ -74,7 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <button class="btn btn-primary d-grid w-100" type="submit">Sign in</button>
                         </div>
                     </form>
-                    <p class="text-center">Demo credentials: admin/admin123, manager/manager123, sales/sales123</p>
                 </div>
             </div>
         </div>

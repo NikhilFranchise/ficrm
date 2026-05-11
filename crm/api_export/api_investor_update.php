@@ -15,28 +15,34 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 try {
     $id = $_POST['id'] ?? '';
+    $name = $_POST['name'] ?? '';
+    $last_name = $_POST['last_name'] ?? '';
     $email = $_POST['email'] ?? '';
-    $mobile = $_POST['mobile'] ?? '';
     $min_inv = $_POST['min_investment'] ?? '';
     $max_inv = $_POST['max_investment'] ?? '';
     $category = $_POST['category_interested'] ?? '';
+    $title = $_POST['title'] ?? '';
+    $address = $_POST['address'] ?? '';
+    $pincode = $_POST['pincode'] ?? '';
+    $qualification = $_POST['qualification'] ?? '';
+    $occupation = $_POST['occupation'] ?? '';
 
     if (!$id) {
         throw new Exception("Investor ID is required.");
     }
 
+    // Perform Actual Update on Remote lead_management table
     $stmt = $pdoApi->prepare("
         UPDATE lead_management 
-        SET email = ?, mobile = ?, min_investment = ?, max_investment = ?, category_interested = ?
+        SET name = ?, last_name = ?, email = ?, min_investment = ?, max_investment = ?, 
+            category_interested = ?, title = ?, address = ?, pincode = ?, 
+            qualification = ?, occupation = ?
         WHERE id = ?
     ");
-    $stmt->execute([$email, $mobile, $min_inv, $max_inv, $category, $id]);
+    $stmt->execute([$name, $last_name, $email, $min_inv, $max_inv, $category, $title, $address, $pincode, $qualification, $occupation, $id]);
 
-    if ($stmt->rowCount() > 0) {
-        $response['message'] = "Investor updated successfully.";
-    } else {
-        $response['message'] = "No changes made or investor not found.";
-    }
+    $response['message'] = "Investor master record updated successfully.";
+    
 } catch (Exception $e) {
     $response['status'] = 'error';
     $response['message'] = $e->getMessage();
