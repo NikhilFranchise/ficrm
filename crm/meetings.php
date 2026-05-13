@@ -189,9 +189,17 @@ $salesmen = $pdoCrm->query("SELECT id, username FROM users")->fetchAll();
                             <td><a href="view.php?type=investor&id=<?= htmlspecialchars($m['investor_id']) ?>" target="_blank" class="fw-bold text-success"><?= htmlspecialchars($m['investor_id']) ?></a></td>
                             <td><?= htmlspecialchars($m['salesman_name']) ?></td>
                             <td class="text-wrap" style="max-width: 300px;">
-                                <?= nl2br(htmlspecialchars($m['notes'])) ?>
-                                <?php if(empty($m['notes'])): ?>
+                                <?php 
+                                $notes = htmlspecialchars($m['notes']);
+                                if(empty($notes)): ?>
                                     <span class="text-muted fst-italic">No notes attached.</span>
+                                <?php elseif(strlen($notes) > 100): 
+                                    echo nl2br(substr($notes, 0, 100)) . '...';
+                                ?>
+                                    <a href="javascript:void(0);" class="text-primary d-block mt-1 small" 
+                                       onclick='showFullNote(<?= json_encode($m['notes']) ?>)'>View Full</a>
+                                <?php else: ?>
+                                    <?= nl2br($notes) ?>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -202,4 +210,26 @@ $salesmen = $pdoCrm->query("SELECT id, username FROM users")->fetchAll();
     </div>
 </div>
 
+<!-- Full Note View Modal -->
+<div class="modal fade" id="fullNoteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Meeting Note</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+          <div id="fullNoteContent" style="white-space: pre-wrap;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <?php require_once 'footer.php'; ?>
+
+<script>
+function showFullNote(content) {
+    document.getElementById('fullNoteContent').innerText = content;
+    new bootstrap.Modal(document.getElementById('fullNoteModal')).show();
+}
+</script>

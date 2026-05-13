@@ -37,16 +37,15 @@ try {
         $stmt = $pdoApi->prepare("SELECT COUNT(*) FROM lead_management WHERE $where");
         $stmt->execute($params);
         $response['total'] = (int)$stmt->fetchColumn();
-        $response['debug_sql'] = "SELECT COUNT(*) FROM lead_management WHERE $where";
-        $response['debug_params'] = $params;
-        $response['debug_get'] = $_GET;
+
+        $sort_order = (isset($_GET['order']) && strtoupper($_GET['order']) === 'ASC') ? 'ASC' : 'DESC';
 
         $stmt = $pdoApi->prepare("
             SELECT id, name as first_name, last_name, email, mobile, city, state, country, 
                    min_investment, max_investment, category_interested, created_at
             FROM lead_management 
             WHERE $where 
-            ORDER BY id DESC LIMIT $limit OFFSET $offset
+            ORDER BY id $sort_order LIMIT $limit OFFSET $offset
         ");
         $stmt->execute($params);
         $response['data'] = $stmt->fetchAll();

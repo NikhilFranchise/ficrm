@@ -12,7 +12,8 @@ $inv_max = $_GET['inv_max'] ?? '';
 
 $extra = [
     'inv_min' => $inv_min,
-    'inv_max' => $inv_max
+    'inv_max' => $inv_max,
+    'order' => 'ASC'
 ];
 
 $apiRes = fetchFromApi('investor', $page, $search, $extra);
@@ -20,6 +21,31 @@ $investors = $apiRes['status'] === 'success' ? $apiRes['data'] : [];
 $total = $apiRes['status'] === 'success' ? $apiRes['total'] : 0;
 $limit = 10;
 $totalPages = ceil($total / $limit);
+
+// Fetch latest activity logs for these investors locally
+$latestNotes = [];
+if (!empty($investors)) {
+    require_once 'db.php';
+    $investorIds = array_column($investors, 'id');
+    $placeholders = implode(',', array_fill(0, count($investorIds), '?'));
+    $logQuery = "
+        SELECT a1.entity_id, a1.notes, a1.created_at, u.username
+        FROM activity_logs a1
+        INNER JOIN (
+            SELECT entity_id, MAX(created_at) as latest
+            FROM activity_logs 
+            WHERE entity_type = 'investor' AND entity_id IN ($placeholders)
+            GROUP BY entity_id
+        ) a2 ON a1.entity_id = a2.entity_id AND a1.created_at = a2.latest
+        LEFT JOIN users u ON a1.user_id = u.id
+        WHERE a1.entity_type = 'investor'
+    ";
+    $logStmt = $pdoCrm->prepare($logQuery);
+    $logStmt->execute($investorIds);
+    while($row = $logStmt->fetch()) {
+        $latestNotes[$row['entity_id']] = $row;
+    }
+}
 ?>
 
 <div class="row">
@@ -87,7 +113,15 @@ $totalPages = ceil($total / $limit);
                         <td><span class="text-primary fw-medium"><?= htmlspecialchars($inv['id']) ?></span></td>
                         <td>
                             <div class="d-flex flex-column">
-                                <span class="fw-bold text-dark"><?= htmlspecialchars($inv['first_name'] . ' ' . $inv['last_name']) ?></span>
+                                <span class="fw-bold text-dark cursor-pointer" 
+                                      data-bs-toggle="popover" 
+                                      data-bs-trigger="hover focus" 
+                                      data-bs-placement="top"
+                                      data-bs-custom-class="popover-primary"
+                                      title="Latest Discussion"
+                                      data-bs-content="<?= isset($latestNotes[$inv['id']]) ? htmlspecialchars($latestNotes[$inv['id']]['notes']) . ' (by ' . $latestNotes[$inv['id']]['username'] . ' on ' . date('M d', strtotime($latestNotes[$inv['id']]['created_at'])) . ')' : 'No activity logged yet.' ?>">
+                                    <?= htmlspecialchars($inv['first_name'] . ' ' . $inv['last_name']) ?>
+                                </span>
                                 <small class="text-muted"><?= htmlspecialchars($inv['email']) ?> / <?= htmlspecialchars($inv['mobile']) ?></small>
                             </div>
                         </td>
@@ -234,3 +268,13 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php require_once 'footer.php'; ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all popovers on the page
+    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    popoverTriggerList.map(function (popoverTriggerEl) {
+        return new bootstrap.Popover(popoverTriggerEl);
+    });
+});
+</script>

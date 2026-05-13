@@ -224,7 +224,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
 require_once 'header.php';
 $catMapping = require_once 'categories.php';
+$indianStates = require_once 'indian_states.php';
 $masterCats = $catMapping['SeoCategoryArr'] ?? [];
+?>
+<!-- Select2 CSS for searchable dropdowns -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container { z-index: 1090 !important; } /* Ensure it shows above modals */
+    .select2-container--default .select2-selection--single { height: 38px; border: 1px solid #d9dee3; }
+    .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 38px; }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+</style>
+<?php
 
 if ($isInvestor) {
     $apiRes = fetchSingleFromApi('investor', $id);
@@ -1009,8 +1020,13 @@ $statShortlists = count($shortlists);
 
           <div class="row g-2 mb-3">
               <div class="col-md-6">
-                  <label class="form-label">Location (City/State)</label>
-                  <input type="text" name="location" class="form-control" placeholder="e.g. Delhi NCR" maxlength="100">
+                  <label class="form-label">Location (State)</label>
+                  <select name="location" class="form-select select2" data-allow-clear="true">
+                      <option value="">Select State...</option>
+                      <?php foreach($indianStates as $code => $name): ?>
+                          <option value="<?= htmlspecialchars($name) ?>"><?= htmlspecialchars($name) ?></option>
+                      <?php endforeach; ?>
+                  </select>
               </div>
               <div class="col-md-6">
                   <label class="form-label">Investment Range</label>
@@ -1045,9 +1061,36 @@ $statShortlists = count($shortlists);
   </div>
 </div>
 
-<?php require_once 'footer.php'; ?>
+<!-- Full Note View Modal -->
+<div class="modal fade" id="fullNoteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Activity Note</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+          <div id="fullNoteContent" style="white-space: pre-wrap;"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
+
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Select2 when modal is shown to avoid "isConnected" errors
+    $('#detailedCallModal').on('shown.bs.modal', function () {
+        $('.select2').select2({
+            dropdownParent: $('#detailedCallModal'),
+            placeholder: "Select State...",
+            allowClear: true
+        });
+    });
+});
+
 function showFullNote(content) {
     document.getElementById('fullNoteContent').innerText = content;
     new bootstrap.Modal(document.getElementById('fullNoteModal')).show();
